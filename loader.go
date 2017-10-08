@@ -2,14 +2,21 @@ package ini
 
 import (
 	"bufio"
+    "bytes"
 	"errors"
 	"fmt"
 	"io"
+    "os"
 	"strconv"
 	"strings"
 	"unicode"
 )
 
+// remove inline comments
+//
+// inline comments must start with ';' or '#'
+// and the char before the ';' or '#' must be a space
+//
 func removeComments(value string) string {
 	pos := strings.LastIndexAny(value, ";#")
 
@@ -20,10 +27,15 @@ func removeComments(value string) string {
 	return strings.TrimSpace(value[0:pos])
 }
 
+// check if it is a oct char,e.g. must be char '0' to '7'
+//
 func isOctChar(ch byte) bool {
 	return ch >= '0' && ch <= '7'
 }
 
+// check if the char is a hex char, e.g. the char
+// must be '0'..'9' or 'a'..'f' or 'A'..'F'
+//
 func isHexChar(ch byte) bool {
 	return ch >= '0' && ch <= '9' ||
 		ch >= 'a' && ch <= 'f' ||
@@ -183,19 +195,22 @@ func (ini *Ini) Load(reader io.Reader) {
 			}
 			continue
 		}
-		pos := strings.Index(line, "=")
+		pos := strings.IndexAny(line, "=;")
 		if pos != -1 {
 			key := strings.TrimSpace(line[0:pos])
 			value := strings.TrimLeftFunc(line[pos+1:], unicode.IsSpace)
+            //if it is a multiline indicator
 			if strings.HasPrefix(value, "\"\"\"") {
 				t := strings.TrimRightFunc(value, unicode.IsSpace)
+                //if the end multiline indicator is found
 				if strings.HasSuffix(t, "\"\"\"") {
 					value = t[3 : len(t)-3]
-				} else {
+				} else {//read lines until end multiline indicator is found
 					value = value[3:] + "\n" + readLinesUntilSuffix(lineReader, "\"\"\"")
 				}
 			} else {
 				value = strings.TrimRightFunc(value, unicode.IsSpace)
+                //if is it a continuation line
 				if t, continuation := removeContinuationSuffix(value); continuation {
 					value = t + readContinuationLines(lineReader)
 				}
@@ -206,4 +221,20 @@ func (ini *Ini) Load(reader io.Reader) {
 			}
 		}
 	}
+}
+
+// Load ini file with fileName
+//
+func (ini *Ini)LoadFile( fileName string) {
+    f,err := os.Open( fileName )
+    if err == nil {
+        defer f.Close()
+        ini.Load( f )
+    }
+}
+
+// load ini from the content which contains the .ini formated string
+//
+func (ini *Ini)LoadString( content  string ) {
+    ini.Load( bytes.NewBufferString(content) )
 }
