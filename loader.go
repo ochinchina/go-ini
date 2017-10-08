@@ -2,11 +2,11 @@ package ini
 
 import (
 	"bufio"
-    "bytes"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
-    "os"
+	"os"
 	"strconv"
 	"strings"
 	"unicode"
@@ -173,7 +173,35 @@ func readContinuationLines(lineReader *LineReader) string {
 	return r
 }
 
-func (ini *Ini) Load(reader io.Reader) {
+// Load from the sources, the source can be one of:
+// - fileName
+// - a string includes .ini
+// - io.Reader the reader to load the .ini contents
+// - byte array incldues .ini content
+func (ini *Ini) Load(sources ...interface{}) {
+	for _, source := range sources {
+		switch source.(type) {
+		case string:
+			s, _ := source.(string)
+			if _, err := os.Stat(s); err == nil {
+				ini.LoadFile(s)
+			} else {
+				ini.LoadString(s)
+			}
+		case io.Reader:
+			reader, _ := source.(io.Reader)
+			ini.LoadReader(reader)
+		case []byte:
+			b, _ := source.([]byte)
+			ini.LoadBytes(b)
+		}
+	}
+
+}
+
+// load .ini from reader
+//
+func (ini *Ini) LoadReader(reader io.Reader) {
 	lineReader := NewLineReader(reader)
 	var curSection *Section = nil
 	for {
@@ -199,25 +227,26 @@ func (ini *Ini) Load(reader io.Reader) {
 		if pos != -1 {
 			key := strings.TrimSpace(line[0:pos])
 			value := strings.TrimLeftFunc(line[pos+1:], unicode.IsSpace)
-            //if it is a multiline indicator
+			//if it is a multiline indicator
 			if strings.HasPrefix(value, "\"\"\"") {
 				t := strings.TrimRightFunc(value, unicode.IsSpace)
-                //if the end multiline indicator is found
+				//if the end multiline indicator is found
 				if strings.HasSuffix(t, "\"\"\"") {
 					value = t[3 : len(t)-3]
-				} else {//read lines until end multiline indicator is found
+				} else { //read lines until end multiline indicator is found
 					value = value[3:] + "\n" + readLinesUntilSuffix(lineReader, "\"\"\"")
 				}
 			} else {
 				value = strings.TrimRightFunc(value, unicode.IsSpace)
-                //if is it a continuation line
+				//if is it a continuation line
 				if t, continuation := removeContinuationSuffix(value); continuation {
 					value = t + readContinuationLines(lineReader)
 				}
 			}
 
 			if len(key) > 0 && curSection != nil {
-				curSection.Add(key, fromEscape(strings.TrimSpace(value)))
+				//remove the comments and convert escape char to real
+				curSection.Add(key, strings.TrimSpace(fromEscape(removeComments(value))))
 			}
 		}
 	}
@@ -225,16 +254,29 @@ func (ini *Ini) Load(reader io.Reader) {
 
 // Load ini file with fileName
 //
-func (ini *Ini)LoadFile( fileName string) {
-    f,err := os.Open( fileName )
-    if err == nil {
-        defer f.Close()
-        ini.Load( f )
-    }
+func (ini *Ini) LoadFile(fileName string) {
+	f, err := os.Open(fileName)
+	if err == nil {
+		defer f.Close()
+		ini.Load(f)
+	}
 }
 
 // load ini from the content which contains the .ini formated string
 //
-func (ini *Ini)LoadString( content  string ) {
-    ini.Load( bytes.NewBufferString(content) )
+func (ini *Ini) LoadString(content string) {
+	ini.Load(bytes.NewBufferString(content))
+}
+
+// load .ini from the content
+func (ini *Ini) LoadBytes(content []byte) {
+	ini.Load(bytes.NewBuffer(content))
+}
+
+func Load(sources ...interface{}) *Ini {
+	ini := NewIni()
+	for _, source := range sources {
+		ini.Load(source)
+	}
+	return ini
 }

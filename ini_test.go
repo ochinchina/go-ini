@@ -10,8 +10,7 @@ func TestSection(t *testing.T) {
     [section2]
     key2=value2`
 
-	ini := NewIni()
-	ini.LoadString( data )
+	ini := Load(data)
 	if !ini.HasSection("section1") || !ini.HasSection("section2") {
 		t.Error("Fail to load ini file")
 	}
@@ -22,8 +21,7 @@ func TestNormalKey(t *testing.T) {
     key1 = """this is one line"""
     [section2]
     key2 = value2`
-	ini := NewIni()
-	ini.LoadString(data)
+	ini := Load(data)
 	if ini.GetWithDefault("section1", "key1", "") != "this is one line" || ini.GetWithDefault("section2", "key2", "") != "value2" {
 		t.Error("Fail to get key")
 	}
@@ -39,8 +37,7 @@ test"""
 key2 = value2
 `
 
-	ini := NewIni()
-	ini.LoadString(data)
+	ini := Load(data)
 	key1_value := `this is a
 multi line
 test`
@@ -52,19 +49,44 @@ test`
 func TestContinuationLine(t *testing.T) {
 	data := "[section1]\nkey1 = this is a \\\nmulti line \\\ntest\nkey2= this is key2\n[section2]\nkey2=value2"
 
-	ini := NewIni()
-	ini.LoadString(data)
+	ini := Load(data)
 	if ini.GetWithDefault("section1", "key1", "") != "this is a multi line test" {
 		t.Error("Fail to load ini with Continuation char")
 	}
 
+	data = "[section1]\nkey1 = this is a line end with \\\\\nkey2= this is key2\n[section2]\nkey2=value2"
+	ini = Load(data)
+	if ini.GetWithDefault("section1", "key1", "") != "this is a line end with \\" {
+		t.Error("Fail to load ini without Continuation char")
+	}
 }
 
 func TestValueWithEscapeChar(t *testing.T) {
 	data := "[section1]\nkey1 = this is a \\nmulti line\\ttest\nkey2= this is key2\n[section2]\nkey2=value2"
-	ini := NewIni()
-	ini.LoadString(data)
+	ini := Load(data)
 	if ini.GetWithDefault("section1", "key1", "") != "this is a \nmulti line\ttest" {
 		t.Error("Fail to load ini with escape char")
+	}
+}
+
+func TestInlineComments(t *testing.T) {
+	//inline comments must be start with ; or # and a space char before it
+	data := "[section1]\nkey1 = this is a inline comment test ;comments\nkeys=this is key2\n[section2]\nkey3=value3"
+	ini := Load(data)
+	if ini.GetWithDefault("section1", "key1", "") != "this is a inline comment test" {
+		t.Error("Fail to load ini with inline comments")
+	}
+
+	data = "[section1]\nkey1 = this is a inline comment test;comments\nkeys=this is key2\n[section2]\nkey3=value3"
+	ini = Load(data)
+	if ini.GetWithDefault("section1", "key1", "") != "this is a inline comment test;comments" {
+		t.Error("Fail to load ini with inline comments")
+	}
+
+	data = "[section1]\nkey1 = this is not a inline comment test \\;comments\nkeys=this is key2\n[section2]\nkey3=value3"
+
+	ini = Load(data)
+	if ini.GetWithDefault("section1", "key1", "") != "this is not a inline comment test ;comments" {
+		t.Error("Fail to load ini without inline comments")
 	}
 }
