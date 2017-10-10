@@ -58,7 +58,7 @@ single-line-key = this is a normal value
 
 ## Continuation line
 
-If a line is too long, user can devide one line to multiple line and on the end of line the char '\' should be put:
+If a line is too long, user can devide one line to multiple line and on the end of line the char '\\' should be put:
 
 ```ini
 [section1]
@@ -70,7 +70,7 @@ but actually it is one line from the point of user
 
 ## Escape char
 
-This library supports the escape char, the escape char is started with char '\'. 
+This library supports the escape char, the escape char is started with char \\ 
 
 |Common escape sequences Sequence |	Meaning                                             |
 |---------------------------------|-----------------------------------------------------|
