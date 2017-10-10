@@ -2,6 +2,92 @@
 
 This is a golang library for reading/writing the .ini format file. The description on .ini file can be found at https://en.wikipedia.org/wiki/INI_file
 
+# Supported .ini format
+
+A .ini file contains one or more sections and each section contains one or more key/value pair. Following is an example of .ini file
+
+```ini
+# this is a comment line
+; this is also a comment line
+
+[section1]
+
+key1 = value1
+
+[section2]
+
+key2 = value2
+```
+
+## Somments
+### Comments line
+
+A comments line is started with char '#' or ';' and it will be ignored when processing the .ini file.
+
+```ini
+
+# this is a comment line
+; this is also a comment line
+
+```
+
+### inline comments
+
+A comment can be appended in a tail of line. The inline comments must be started with ';' or '#' and its previous char must be a space.
+
+```ini
+[section1]
+key1 = value1 ;this is a inline comment
+key2 = value2;this is not a inline comment
+```
+
+## Multiline value
+
+if a value is multiple line value, the value can be put between """ and """, an example:
+
+```ini
+
+[section1]
+
+multi-line-key = """this is a multi-line example,
+multiple line can be put in a value,
+this is multiple line is just for test"""
+
+single-line-key = this is a normal value
+```
+
+## Continuation line
+
+If a line is too long, user can devide one line to multiple line and on the end of line the char '\' should be put:
+
+```ini
+[section1]
+key1 = this line is too long, \
+we need to write it to multiple line, \
+but actually it is one line from the point of user
+
+```
+
+## Escape char
+
+This library supports the escape char, the escape char is started with char '\'. 
+
+|Common escape sequences Sequence |	Meaning                                             |
+|---------------------------------|-----------------------------------------------------|
+|\\ 	                            |\ (a single backslash, escaping the escape character)|
+|\0                               |Null character                                       |
+|\a 	                            |Bell/Alert/Audible                                   |
+|\b 	                            |Backspace, Bell character for some applications      |
+|\t 	                            |Tab character                                        |
+|\r 	                            |Carriage return                                      |
+|\n 	                            |Line feed                                            |
+|\; 	                            |Semicolon                                            |
+|\# 	                            |Number sign                                          |
+|\= 	                            |Equals sign                                          |
+|\: 	                            |Colon                                                |
+|\x???? 	                        |Unicode character with hexadecimal code point        |
+
+
 # API
 
 ## import the library
@@ -13,7 +99,7 @@ import (
   ini "github.com/ochinchina/go-ini"
 )
 ```
-## Load .ini
+## Load .ini file
 
 .ini format file or string can be loaded by the method:
 
