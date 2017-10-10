@@ -74,18 +74,18 @@ This library supports the escape char, the escape char is started with char '\'.
 
 |Common escape sequences Sequence |	Meaning                                             |
 |---------------------------------|-----------------------------------------------------|
-|\\ 	                            |\ (a single backslash, escaping the escape character)|
+|\\\\ 	                          |\ (a single backslash, escaping the escape character)|
 |\0                               |Null character                                       |
 |\a 	                            |Bell/Alert/Audible                                   |
 |\b 	                            |Backspace, Bell character for some applications      |
 |\t 	                            |Tab character                                        |
 |\r 	                            |Carriage return                                      |
 |\n 	                            |Line feed                                            |
-|\; 	                            |Semicolon                                            |
-|\# 	                            |Number sign                                          |
-|\= 	                            |Equals sign                                          |
-|\: 	                            |Colon                                                |
-|\x???? 	                        |Unicode character with hexadecimal code point        |
+|\\; 	                            |Semicolon                                            |
+|\\# 	                            |Number sign                                          |
+|\\= 	                            |Equals sign                                          |
+|\\: 	                            |Colon                                                |
+|\\x???? 	                        |Unicode character with hexadecimal code point        |
 
 
 # API
