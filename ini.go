@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 )
 
 // manage all the sections and their key values defined in the .ini file
@@ -224,4 +225,14 @@ func (ini *Ini) Write(writer io.Writer) error {
 		}
 	}
 	return nil
+}
+
+// Write the conents of ini to a file
+func (ini *Ini) WriteToFile(fileName string) error {
+	file, err := os.Create(fileName)
+	if err == nil {
+		defer file.Close()
+		return ini.Write(file)
+	}
+	return err
 }
