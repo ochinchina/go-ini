@@ -80,6 +80,7 @@ func fromEscape(value string) string {
 				case 'v':
 					r = r + "\v"
 				case 'x':
+					i++
 					if i+3 < n && isHexChar(value[i]) &&
 						isHexChar(value[i+1]) &&
 						isHexChar(value[i+2]) &&
@@ -121,15 +122,15 @@ func removeContinuationSuffix(value string) (string, bool) {
 	return "", false
 }
 
-type LineReader struct {
+type lineReader struct {
 	reader *bufio.Scanner
 }
 
-func NewLineReader(reader io.Reader) *LineReader {
-	return &LineReader{reader: bufio.NewScanner(reader)}
+func newLineReader(reader io.Reader) *lineReader {
+	return &lineReader{reader: bufio.NewScanner(reader)}
 }
 
-func (lr *LineReader) ReadLine() (string, error) {
+func (lr *lineReader) readLine() (string, error) {
 	if lr.reader.Scan() {
 		return lr.reader.Text(), nil
 	}
@@ -137,10 +138,10 @@ func (lr *LineReader) ReadLine() (string, error) {
 
 }
 
-func readLinesUntilSuffix(lineReader *LineReader, suffix string) string {
+func readLinesUntilSuffix(lineReader *lineReader, suffix string) string {
 	r := ""
 	for {
-		line, err := lineReader.ReadLine()
+		line, err := lineReader.readLine()
 		if err != nil {
 			break
 		}
@@ -155,10 +156,10 @@ func readLinesUntilSuffix(lineReader *LineReader, suffix string) string {
 	return r
 }
 
-func readContinuationLines(lineReader *LineReader) string {
+func readContinuationLines(lineReader *lineReader) string {
 	r := ""
 	for {
-		line, err := lineReader.ReadLine()
+		line, err := lineReader.readLine()
 		if err != nil {
 			break
 		}
@@ -173,11 +174,13 @@ func readContinuationLines(lineReader *LineReader) string {
 	return r
 }
 
-// Load from the sources, the source can be one of:
-// - fileName
-// - a string includes .ini
-// - io.Reader the reader to load the .ini contents
-// - byte array incldues .ini content
+/*
+Load from the sources, the source can be one of:
+    - fileName
+    - a string includes .ini
+    - io.Reader the reader to load the .ini contents
+    - byte array incldues .ini content
+*/
 func (ini *Ini) Load(sources ...interface{}) {
 	for _, source := range sources {
 		switch source.(type) {
@@ -199,13 +202,13 @@ func (ini *Ini) Load(sources ...interface{}) {
 
 }
 
-// load .ini from reader
+// Explicitly loads .ini from a reader
 //
 func (ini *Ini) LoadReader(reader io.Reader) {
-	lineReader := NewLineReader(reader)
+	lineReader := newLineReader(reader)
 	var curSection *Section = nil
 	for {
-		line, err := lineReader.ReadLine()
+		line, err := lineReader.readLine()
 		if err != nil {
 			break
 		}
@@ -252,7 +255,7 @@ func (ini *Ini) LoadReader(reader io.Reader) {
 	}
 }
 
-// Load ini file with fileName
+// Load ini file from file named fileName
 //
 func (ini *Ini) LoadFile(fileName string) {
 	f, err := os.Open(fileName)
@@ -268,11 +271,23 @@ func (ini *Ini) LoadString(content string) {
 	ini.Load(bytes.NewBufferString(content))
 }
 
-// load .ini from the content
+// load .ini from a byte array which contains the .ini formated content
 func (ini *Ini) LoadBytes(content []byte) {
 	ini.Load(bytes.NewBuffer(content))
 }
 
+/*
+Load the .ini from one of following resource:
+    - file
+    - string in .ini format
+    - byte array in .ini format
+    - io.Reader a reader to load .ini content
+
+One or more source can be provided in this Load method, such as:
+    var reader1 io.Reader = ...
+    var reader2 io.Reader = ...
+    ini.Load( "./my.ini", "[section]\nkey=1", "./my2.ini", reader1, reader2 )
+*/
 func Load(sources ...interface{}) *Ini {
 	ini := NewIni()
 	for _, source := range sources {

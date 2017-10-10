@@ -3,8 +3,12 @@ package ini
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
+// represents the <key, value> pair stored in the
+// section of the .ini file
+//
 type Key interface {
 	// get name of the key
 	Name() string
@@ -16,6 +20,19 @@ type Key interface {
 	//the value does not exist
 	ValueWithDefault(defValue string) string
 
+	// get the value as bool
+	// return true if the value is one of following(case insensitive):
+	// - true
+	// - yes
+	// - T
+	// - Y
+	// - 1
+	// Any other value will return false
+	Bool() (bool, error)
+
+	// get the value as bool and return the defValue if the
+	// value of the key does not exist
+	BoolWithDefault(defValue bool) bool
 	// get the value as int
 	Int() (int, error)
 
@@ -56,95 +73,125 @@ type Key interface {
 	String() string
 }
 
-type NonExistKey struct {
+type nonExistKey struct {
 	name string
 }
 
-func NewNonExistKey(name string) *NonExistKey {
-	return &NonExistKey{name: name}
+func newNonExistKey(name string) *nonExistKey {
+	return &nonExistKey{name: name}
 }
 
-func (nek *NonExistKey) Name() string {
+func (nek *nonExistKey) Name() string {
 	return nek.name
 }
 
-func (nek *NonExistKey) Value() (string, error) {
-	return "", fmt.Errorf("no such key:%s", nek.name)
+func (nek *nonExistKey) Value() (string, error) {
+	return "", nek.noSuchKey()
 }
 
-func (nek *NonExistKey) ValueWithDefault(defValue string) string {
-	return defValue
-}
-func (nek *NonExistKey) Int() (int, error) {
-	return 0, fmt.Errorf("no such key:%s", nek.name)
-}
-
-func (nek *NonExistKey) IntWithDefault(defValue int) int {
+func (nek *nonExistKey) ValueWithDefault(defValue string) string {
 	return defValue
 }
 
-func (nek *NonExistKey) Int64() (int64, error) {
-	return 0, fmt.Errorf("no such key:%s", nek.name)
+func (nek *nonExistKey) Bool() (bool, error) {
+	return false, nek.noSuchKey()
 }
 
-func (nek *NonExistKey) Int64WithDefault(defValue int64) int64 {
+func (nek *nonExistKey) BoolWithDefault(defValue bool) bool {
 	return defValue
 }
 
-func (nek *NonExistKey) Uint64() (uint64, error) {
-	return 0, fmt.Errorf("no such key:%s", nek.name)
+func (nek *nonExistKey) Int() (int, error) {
+	return 0, nek.noSuchKey()
 }
 
-func (nek *NonExistKey) Uint64WithDefault(defValue uint64) uint64 {
+func (nek *nonExistKey) IntWithDefault(defValue int) int {
 	return defValue
 }
 
-func (nek *NonExistKey) Float32() (float32, error) {
-	return .0, fmt.Errorf("no such key:%s", nek.name)
+func (nek *nonExistKey) Int64() (int64, error) {
+	return 0, nek.noSuchKey()
 }
 
-func (nek *NonExistKey) Float32WithDefault(defValue float32) float32 {
+func (nek *nonExistKey) Int64WithDefault(defValue int64) int64 {
 	return defValue
 }
 
-func (nek *NonExistKey) Float64() (float64, error) {
-	return .0, fmt.Errorf("no such key:%s", nek.name)
+func (nek *nonExistKey) Uint64() (uint64, error) {
+	return 0, nek.noSuchKey()
 }
 
-func (nek *NonExistKey) Float64WithDefault(defValue float64) float64 {
+func (nek *nonExistKey) Uint64WithDefault(defValue uint64) uint64 {
 	return defValue
 }
 
-func (nek *NonExistKey) String() string {
+func (nek *nonExistKey) Float32() (float32, error) {
+	return .0, nek.noSuchKey()
+}
+
+func (nek *nonExistKey) Float32WithDefault(defValue float32) float32 {
+	return defValue
+}
+
+func (nek *nonExistKey) Float64() (float64, error) {
+	return .0, nek.noSuchKey()
+}
+
+func (nek *nonExistKey) Float64WithDefault(defValue float64) float64 {
+	return defValue
+}
+
+func (nek *nonExistKey) String() string {
 	return ""
 }
 
-type NormalKey struct {
+func (nek *nonExistKey) noSuchKey() error {
+	return fmt.Errorf("no such key:%s", nek.name)
+}
+
+type normalKey struct {
 	name  string
 	value string
 }
 
-func NewNormalKey(name, value string) *NormalKey {
-	return &NormalKey{name: name, value: value}
+var trueBoolValue = map[string]bool{"true": true, "t": true, "yes": true, "y": true, "1": true}
+
+func newNormalKey(name, value string) *normalKey {
+	return &normalKey{name: name, value: value}
 }
 
-func (k *NormalKey) Name() string {
+func (k *normalKey) Name() string {
 	return k.name
 }
 
-func (k *NormalKey) Value() (string, error) {
+func (k *normalKey) Value() (string, error) {
 	return k.value, nil
 }
 
-func (k *NormalKey) ValueWithDefault(defValue string) string {
+func (k *normalKey) ValueWithDefault(defValue string) string {
 	return k.value
 }
 
-func (k *NormalKey) Int() (int, error) {
+func (k *normalKey) Bool() (bool, error) {
+	if _, ok := trueBoolValue[strings.ToLower(k.value)]; ok {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (k *normalKey) BoolWithDefault(defValue bool) bool {
+	v, err := k.Bool()
+	if err == nil {
+		return v
+	}
+	return defValue
+}
+
+func (k *normalKey) Int() (int, error) {
 	return strconv.Atoi(k.value)
 }
 
-func (k *NormalKey) IntWithDefault(defValue int) int {
+func (k *normalKey) IntWithDefault(defValue int) int {
 	i, err := strconv.Atoi(k.value)
 	if err == nil {
 		return i
@@ -152,11 +199,11 @@ func (k *NormalKey) IntWithDefault(defValue int) int {
 	return defValue
 }
 
-func (k *NormalKey) Int64() (int64, error) {
+func (k *normalKey) Int64() (int64, error) {
 	return strconv.ParseInt(k.value, 0, 64)
 }
 
-func (k *NormalKey) Int64WithDefault(defValue int64) int64 {
+func (k *normalKey) Int64WithDefault(defValue int64) int64 {
 	i, err := strconv.ParseInt(k.value, 0, 64)
 	if err == nil {
 		return i
@@ -164,11 +211,11 @@ func (k *NormalKey) Int64WithDefault(defValue int64) int64 {
 	return defValue
 }
 
-func (k *NormalKey) Uint64() (uint64, error) {
+func (k *normalKey) Uint64() (uint64, error) {
 	return strconv.ParseUint(k.value, 0, 64)
 }
 
-func (k *NormalKey) Uint64WithDefault(defValue uint64) uint64 {
+func (k *normalKey) Uint64WithDefault(defValue uint64) uint64 {
 	i, err := strconv.ParseUint(k.value, 0, 64)
 	if err == nil {
 		return i
@@ -176,12 +223,12 @@ func (k *NormalKey) Uint64WithDefault(defValue uint64) uint64 {
 	return defValue
 }
 
-func (k *NormalKey) Float32() (float32, error) {
+func (k *normalKey) Float32() (float32, error) {
 	f, err := strconv.ParseFloat(k.value, 32)
 	return float32(f), err
 }
 
-func (k *NormalKey) Float32WithDefault(defValue float32) float32 {
+func (k *normalKey) Float32WithDefault(defValue float32) float32 {
 	f, err := strconv.ParseFloat(k.value, 32)
 	if err == nil {
 		return float32(f)
@@ -189,11 +236,11 @@ func (k *NormalKey) Float32WithDefault(defValue float32) float32 {
 	return defValue
 }
 
-func (k *NormalKey) Float64() (float64, error) {
+func (k *normalKey) Float64() (float64, error) {
 	return strconv.ParseFloat(k.value, 64)
 }
 
-func (k *NormalKey) Float64WithDefault(defValue float64) float64 {
+func (k *normalKey) Float64WithDefault(defValue float64) float64 {
 	f, err := strconv.ParseFloat(k.value, 64)
 	if err == nil {
 		return f
@@ -201,6 +248,6 @@ func (k *NormalKey) Float64WithDefault(defValue float64) float64 {
 	return defValue
 }
 
-func (k *NormalKey) String() string {
+func (k *normalKey) String() string {
 	return fmt.Sprintf("%s=%s", k.name, k.value)
 }
