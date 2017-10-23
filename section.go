@@ -93,6 +93,17 @@ func (section *Section) GetIntWithDefault(key string, defValue int) int {
 	return section.Key(key).IntWithDefault(defValue)
 }
 
+// Get the value of the key as uint
+func (section *Section) GetUint(key string) (uint, error) {
+	return section.Key(key).Uint()
+}
+
+// Get the value of the key as int and if the key does not exist return
+// the default value
+func (section *Section) GetUintWithDefault(key string, defValue uint) uint {
+	return section.Key(key).UintWithDefault(defValue)
+}
+
 // Get the value of the key as int64
 func (section *Section) GetInt64(key string) (int64, error) {
 	return section.Key(key).Int64()

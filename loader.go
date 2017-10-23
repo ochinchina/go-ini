@@ -247,9 +247,14 @@ func (ini *Ini) LoadReader(reader io.Reader) {
 				}
 			}
 
-			if len(key) > 0 && curSection != nil {
-				//remove the comments and convert escape char to real
-				curSection.Add(key, strings.TrimSpace(fromEscape(removeComments(value))))
+			if len(key) > 0 {
+				if curSection == nil && len(ini.defaultSectionName) > 0 {
+					curSection = ini.NewSection(ini.defaultSectionName)
+				}
+				if curSection != nil {
+					//remove the comments and convert escape char to real
+					curSection.Add(key, strings.TrimSpace(fromEscape(removeComments(value))))
+				}
 			}
 		}
 	}
@@ -263,6 +268,12 @@ func (ini *Ini) LoadFile(fileName string) {
 		defer f.Close()
 		ini.Load(f)
 	}
+}
+
+var defaultSectionName string = "default"
+
+func SetDefaultSectionName(defSectionName string) {
+	defaultSectionName = defSectionName
 }
 
 // load ini from the content which contains the .ini formated string
@@ -290,6 +301,7 @@ One or more source can be provided in this Load method, such as:
 */
 func Load(sources ...interface{}) *Ini {
 	ini := NewIni()
+	ini.SetDefaultSectionName(defaultSectionName)
 	for _, source := range sources {
 		ini.Load(source)
 	}

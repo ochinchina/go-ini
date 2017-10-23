@@ -10,11 +10,21 @@ import (
 // manage all the sections and their key values defined in the .ini file
 //
 type Ini struct {
-	sections map[string]*Section
+	defaultSectionName string
+	sections           map[string]*Section
 }
 
 func NewIni() *Ini {
-	return &Ini{sections: make(map[string]*Section)}
+	return &Ini{defaultSectionName: "default",
+		sections: make(map[string]*Section)}
+}
+
+func (ini *Ini) GetDefaultSectionName() string {
+	return ini.defaultSectionName
+}
+
+func (ini *Ini) SetDefaultSectionName(defSectionName string) {
+	ini.defaultSectionName = defSectionName
 }
 
 // create a new section if the section with name does not exist
@@ -127,6 +137,23 @@ func (ini *Ini) GetInt(sectionName, key string) (int, error) {
 func (ini *Ini) GetIntWithDefault(sectionName, key string, defValue int) int {
 	if section, ok := ini.sections[sectionName]; ok {
 		return section.GetIntWithDefault(key, defValue)
+	}
+	return defValue
+}
+
+// get the value of key in the section as uint
+func (ini *Ini) GetUint(sectionName, key string) (uint, error) {
+	if section, ok := ini.sections[sectionName]; ok {
+		return section.GetUint(key)
+	}
+	return 0, noSuchSection(sectionName)
+}
+
+// get the value of key in the section as int and return defValue if the section in the .ini file
+// or key in the section does not exist
+func (ini *Ini) GetUintWithDefault(sectionName, key string, defValue uint) uint {
+	if section, ok := ini.sections[sectionName]; ok {
+		return section.GetUintWithDefault(key, defValue)
 	}
 	return defValue
 }

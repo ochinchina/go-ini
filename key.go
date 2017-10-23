@@ -40,6 +40,13 @@ type Key interface {
 	// value of the key does not exist
 	IntWithDefault(defValue int) int
 
+	//get value as uint
+	Uint() (uint, error)
+
+	//get value as uint and return defValue if the
+	//key does not exist or it is not uint format
+	UintWithDefault(defValue uint) uint
+
 	// get the value as int64
 	Int64() (int64, error)
 
@@ -106,6 +113,14 @@ func (nek *nonExistKey) Int() (int, error) {
 }
 
 func (nek *nonExistKey) IntWithDefault(defValue int) int {
+	return defValue
+}
+
+func (nek *nonExistKey) Uint() (uint, error) {
+	return 0, nek.noSuchKey()
+}
+
+func (nek *nonExistKey) UintWithDefault(defValue uint) uint {
 	return defValue
 }
 
@@ -197,6 +212,20 @@ func (k *normalKey) IntWithDefault(defValue int) int {
 		return i
 	}
 	return defValue
+}
+
+func (k *normalKey) Uint() (uint, error) {
+	v, err := strconv.ParseUint(k.value, 0, 32)
+	return uint(v), err
+}
+
+func (k *normalKey) UintWithDefault(defValue uint) uint {
+	i, err := k.Uint()
+	if err == nil {
+		return i
+	}
+	return defValue
+
 }
 
 func (k *normalKey) Int64() (int64, error) {
