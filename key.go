@@ -172,7 +172,7 @@ type normalKey struct {
 var trueBoolValue = map[string]bool{"true": true, "t": true, "yes": true, "y": true, "1": true}
 
 func newNormalKey(name, value string) *normalKey {
-	return &normalKey{name: name, value: value}
+	return &normalKey{name: name, value: replace_env(value)}
 }
 
 func (k *normalKey) Name() string {
