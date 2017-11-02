@@ -88,6 +88,20 @@ This library supports the escape char, the escape char is started with char \\
 |\\x???? 	                        |Unicode character with hexadecimal code point        |
 
 
+## Environemnt variable support
+
+Environment variable can be embeded in the value of the key and the environment variable will be replaced. For example:
+
+```ini
+[section1]
+key1 = this value has env ${HOME}
+key2 = this value has env with default ${SOME_ENV:-test},hihi
+```
+
+In the above example, the environment variable HOME is in the value of key1. So if the value of environment variable HOME is "/home/test", the value of key1 is "this value has env /home/test".
+
+For the key2, the environemnt SOME_ENV is included and if the environment variable SOME_ENV does not exist, its value will be "test" otherwise it will be the value of SOME_ENV environment variable.
+
 # API
 
 ## import the library
