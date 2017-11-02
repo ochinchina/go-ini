@@ -278,5 +278,5 @@ func (k *normalKey) Float64WithDefault(defValue float64) float64 {
 }
 
 func (k *normalKey) String() string {
-	return fmt.Sprintf("%s=%s", k.name, k.value)
+	return fmt.Sprintf("%s=%s", k.name, toEscape(k.value))
 }

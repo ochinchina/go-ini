@@ -71,6 +71,13 @@ func TestValueWithEscapeChar(t *testing.T) {
 	}
 }
 
+func TestToEscape(t *testing.T) {
+	data := "string with escape char \r\n\t;# for testing"
+	new_data := "string with escape char \\r\\n\\t\\;\\# for testing"
+	if toEscape(data) != new_data {
+		t.Error("Fail to convert escape string")
+	}
+}
 func TestInlineComments(t *testing.T) {
 	//inline comments must be start with ; or # and a space char before it
 	data := "[section1]\nkey1 = this is a inline comment test ;comments\nkeys=this is key2\n[section2]\nkey3=value3"

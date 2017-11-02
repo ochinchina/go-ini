@@ -103,6 +103,41 @@ func fromEscape(value string) string {
 	return r
 }
 
+func toEscape(s string) string {
+	result := bytes.NewBuffer(make([]byte, 0))
+
+	n := len(s)
+
+	for i := 0; i < n; i++ {
+		switch s[i] {
+		case 0:
+			result.WriteString("\\0")
+		case '\\':
+			result.WriteString("\\\\")
+		case '\a':
+			result.WriteString("\\a")
+		case '\b':
+			result.WriteString("\\b")
+		case '\t':
+			result.WriteString("\\t")
+		case '\r':
+			result.WriteString("\\r")
+		case '\n':
+			result.WriteString("\\n")
+		case ';':
+			result.WriteString("\\;")
+		case '#':
+			result.WriteString("\\#")
+		case '=':
+			result.WriteString("\\=")
+		case ':':
+			result.WriteString("\\:")
+		default:
+			result.WriteByte(s[i])
+		}
+	}
+	return result.String()
+}
 func removeContinuationSuffix(value string) (string, bool) {
 	pos := strings.LastIndex(value, "\\")
 	n := len(value)
