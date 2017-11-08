@@ -19,7 +19,7 @@ key1 = value1
 key2 = value2
 ```
 
-## Somments
+## Comments
 ### Comments line
 
 A comments line is started with char '#' or ';' and it will be ignored when processing the .ini file.
