@@ -18,13 +18,18 @@ import (
 // and the char before the ';' or '#' must be a space
 //
 func removeComments(value string) string {
-	pos := strings.LastIndexAny(value, ";#")
-
-	//if no inline comments
-	if pos == -1 || !unicode.IsSpace(rune(value[pos-1])) {
-		return value
-	}
-	return strings.TrimSpace(value[0:pos])
+    n := len( value )
+    i := 0
+    for ;i < n; i++ {
+        if value[i] == '\\' {
+            i++
+        } else if value[i] == ';' || value[i] == '#' {
+            if i > 0 && unicode.IsSpace( rune( value[i-1] ) ) {
+                return strings.TrimSpace( value[0:i] )
+            }
+        }
+    }
+    return strings.TrimSpace( value )
 }
 
 // check if it is a oct char,e.g. must be char '0' to '7'

@@ -80,7 +80,7 @@ func TestToEscape(t *testing.T) {
 }
 func TestInlineComments(t *testing.T) {
 	//inline comments must be start with ; or # and a space char before it
-	data := "[section1]\nkey1 = this is a inline comment test ;comments\nkeys=this is key2\n[section2]\nkey3=value3"
+	data := "[section1]\nkey1 = this is a inline comment test ; comments ; do you know\nkeys=this is key2\n[section2]\nkey3=value3"
 	ini := Load(data)
 	if ini.GetValueWithDefault("section1", "key1", "") != "this is a inline comment test" {
 		t.Error("Fail to load ini with inline comments")

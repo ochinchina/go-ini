@@ -24,6 +24,19 @@ func (p *Properties) GetPropertyWithDefault(key string, defValue string) string 
 	return defValue
 }
 
+func (p *Properties) GetBool(key string) (bool, error) {
+	return p.ini.GetBool(p.ini.GetDefaultSectionName(), key)
+}
+
+func (p *Properties) GetBoolWithDefault(key string, defValue bool) bool{
+	v, err := p.GetBool(key)
+	if err == nil {
+		return v
+	} else {
+		return defValue
+	}
+}
+
 func (p *Properties) GetInt(key string) (int, error) {
 	return p.ini.GetInt(p.ini.GetDefaultSectionName(), key)
 }
