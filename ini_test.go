@@ -145,3 +145,19 @@ func TestIniWriteRead(t *testing.T) {
 		}
 	}
 }
+
+func TestMultiLine2(t *testing.T) {
+	data := `[section1]
+key1 : this is a ;comment1
+ multi line #comment
+ test #comment
+[section2]
+key2 = value2
+		`
+
+	ini := Load(data)
+	key1_value := "this is a\nmulti line\ntest"
+	if ini.GetValueWithDefault("section1", "key1", "") != key1_value {
+		t.Error("Fail to load ini with multi line keys")
+	}
+}

@@ -18,18 +18,18 @@ import (
 // and the char before the ';' or '#' must be a space
 //
 func removeComments(value string) string {
-    n := len( value )
-    i := 0
-    for ;i < n; i++ {
-        if value[i] == '\\' {
-            i++
-        } else if value[i] == ';' || value[i] == '#' {
-            if i > 0 && unicode.IsSpace( rune( value[i-1] ) ) {
-                return strings.TrimSpace( value[0:i] )
-            }
-        }
-    }
-    return strings.TrimSpace( value )
+	n := len(value)
+	i := 0
+	for ; i < n; i++ {
+		if value[i] == '\\' {
+			i++
+		} else if value[i] == ';' || value[i] == '#' {
+			if i > 0 && unicode.IsSpace(rune(value[i-1])) {
+				return strings.TrimSpace(value[0:i])
+			}
+		}
+	}
+	return strings.TrimSpace(value)
 }
 
 // check if it is a oct char,e.g. must be char '0' to '7'
@@ -196,6 +196,8 @@ func readLinesUntilSuffix(lineReader *lineReader, suffix string) string {
 	return r
 }
 
+// if a line enss with char '\', we can read the next line
+//
 func readContinuationLines(lineReader *lineReader) string {
 	r := ""
 	for {
@@ -242,35 +244,81 @@ func (ini *Ini) Load(sources ...interface{}) {
 
 }
 
+// return the number of spaces before non-space chars
+func getIndent(s string) int {
+	n := 0
+	for i := 0; i < len(s); i++ {
+		if unicode.IsSpace(rune(s[i])) {
+			n++
+		} else {
+			break
+		}
+	}
+	return n
+}
+
+func isCommentLine(line string) bool {
+	line = strings.TrimSpace(line)
+	return len(line) <= 0 || line[0] == ';' || line[0] == '#'
+}
+
+// parse the section if it is a section line
+// Return section name if it is a section else return nil
+func parseSectionName(line string) *string {
+	line = strings.TrimSpace(line)
+
+	if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+		sectionName := strings.TrimSpace(line[1 : len(line)-1])
+		return &sectionName
+	} else {
+		return nil
+	}
+
+}
+
 // Explicitly loads .ini from a reader
 //
 func (ini *Ini) LoadReader(reader io.Reader) {
 	lineReader := newLineReader(reader)
 	var curSection *Section = nil
+	keyIndent := -1
+	prevKey := ""
 	for {
 		line, err := lineReader.readLine()
 		if err != nil {
 			break
 		}
-		line = strings.TrimSpace(line)
+
+		//if this line is value of the key
+		if keyIndent >= 0 && getIndent(line) > keyIndent && curSection != nil && prevKey != "" {
+			v := curSection.GetValueWithDefault(prevKey, "")
+			v = fmt.Sprintf("%s\n%s", v, fromEscape(removeComments(line)))
+			curSection.Add(prevKey, v )
+
+			continue
+		}
 
 		//empty line or comments line
-		if len(line) <= 0 || line[0] == ';' || line[0] == '#' {
+		if isCommentLine(line) {
 			continue
 		}
 		//if it is a section
-		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
-			sectionName := strings.TrimSpace(line[1 : len(line)-1])
-			if len(sectionName) > 0 {
-				curSection = ini.NewSection(sectionName)
-			}
+		sectionName := parseSectionName( line )
+		if sectionName != nil {
+			curSection = ini.NewSection(*sectionName)
+			// reset the previous key and the key indent
+			prevKey = ""
+			keyIndent = -1
 			continue
 		}
-		pos := strings.IndexAny(line, "=;")
+		//key&value is separated with = or :
+		pos := strings.IndexAny(line, "=:")
 		if pos != -1 {
+			keyIndent = getIndent(line)
 			key := strings.TrimSpace(line[0:pos])
+			prevKey = key
 			value := strings.TrimLeftFunc(line[pos+1:], unicode.IsSpace)
-			//if it is a multiline indicator
+			//if it is a multiline indicator """
 			if strings.HasPrefix(value, "\"\"\"") {
 				t := strings.TrimRightFunc(value, unicode.IsSpace)
 				//if the end multiline indicator is found
